@@ -1,34 +1,37 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
 from aiogram.utils import executor
 from dotenv import load_dotenv
 import os
 from sympy import sympify, Symbol, pi, E
 
+# Load environment variables
 load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN')
 
 if not API_TOKEN:
     raise ValueError("Токен API не найден! Убедитесь, что он указан в .env файле.")
 
+# Initialize the bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
+# User history storage
 user_history = {}
 
+# Function to calculate the expression
 def calculate(expression):
     try:
-        # sympify преобразует строку в математическое выражение
+        # sympify converts the string to a mathematical expression
         result = sympify(expression).evalf()
         return result
     except Exception as e:
         return f"Ошибка: {e}"
 
-# Команда /start
+# Command /start
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
-    user_history[user_id] = []  # Инициализируем историю пользователя
+    user_history[user_id] = []  # Initialize user history
     await message.reply(
         "Привет! Я научный калькулятор-бот. Введи выражение, и я посчитаю его.\n"
         "Доступные команды:\n"
@@ -37,7 +40,7 @@ async def send_welcome(message: types.Message):
         "/clear_history - Очистить историю"
     )
 
-# Команда /help
+# Command /help
 @dp.message_handler(commands=['help'])
 async def send_help(message: types.Message):
     await message.reply(
@@ -53,39 +56,39 @@ async def send_help(message: types.Message):
         "`log(100, 10)`\n"
         "`sin(pi / 2)`\n\n"
         "Для просмотра истории используй /history.",
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode=types.ParseMode.MARKDOWN,
     )
 
-# Команда /history
+# Command /history
 @dp.message_handler(commands=['history'])
 async def send_history(message: types.Message):
     user_id = message.from_user.id
     history = user_history.get(user_id, [])
     if history:
-        history_message = "\n".join(history[-10:])  # Показываем последние 10 операций
+        history_message = "\n".join(history[-10:])  # Show the last 10 operations
         await message.reply(f"Ваша история вычислений:\n{history_message}")
     else:
         await message.reply("История пуста.")
 
-# Команда /clear_history
+# Command /clear_history
 @dp.message_handler(commands=['clear_history'])
 async def clear_history(message: types.Message):
     user_id = message.from_user.id
     user_history[user_id] = []
     await message.reply("История очищена.")
 
-# Обработчик текстовых сообщений (вычисления)
+# Text message handler (calculations)
 @dp.message_handler()
 async def calculate_expression(message: types.Message):
     user_id = message.from_user.id
     expression = message.text
 
-    # Выполняем вычисление
+    # Perform the calculation
     result = calculate(expression)
     if isinstance(result, (int, float, Symbol)):
-        # Сохраняем результат в историю
+        # Save the result to history
         user_history.setdefault(user_id, []).append(f"{expression} = {result}")
-        await message.reply(f"Результат: <b>{result}</b>", parse_mode=ParseMode.HTML)
+        await message.reply(f"Результат: <b>{result}</b>", parse_mode=types.ParseMode.HTML)
     else:
         await message.reply(result)
 
