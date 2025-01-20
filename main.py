@@ -20,6 +20,10 @@ def calculate(expression):
     try:
         # sympify converts the string to a mathematical expression
         result = sympify(expression).evalf()
+
+        # If result is an integer, return as integer; otherwise, return as float
+        if result == result.round():  # If it's an integer value
+            return int(result)
         return result
     except Exception as e:
         return f"Ошибка: {e}"
@@ -33,8 +37,6 @@ async def send_welcome(message: types.Message):
         "Привет! Я научный калькулятор-бот. Введи выражение, и я посчитаю его.\n"
         "Доступные команды:\n"
         "/help - Список доступных функций\n"
-        "/history - Показать историю вычислений\n"
-        "/clear_history - Очистить историю"
     )
 
 # Command /help
@@ -48,12 +50,12 @@ async def send_help(message: types.Message):
         "- Постоянные: pi, e\n"
         "- Корни: sqrt(x)\n\n"
         "Просто введи выражение, например:\n"
-        "`2 * pi * 10`\n"
-        "`sqrt(16)`\n"
-        "`log(100, 10)`\n"
-        "`sin(pi / 2)`\n\n"
+        "<code>2 * pi * 10</code>\n"
+        "<code>sqrt(16)</code>\n"
+        "<code>log(100, 10)</code>\n"
+        "<code>sin(pi / 2)</code>\n\n"
         "Для просмотра истории используй /history.",
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode=ParseMode.HTML,
     )
 
 # Command /history
@@ -83,11 +85,14 @@ async def calculate_expression(message: types.Message):
     # Perform the calculation
     result = calculate(expression)
     if isinstance(result, (int, float, Symbol)):
-        # Save the result to history
-        user_history.setdefault(user_id, []).append(f"{expression} = {result}")
+        # Ensure that user_history exists for the user and add result to history
+        if user_id not in user_history:
+            user_history[user_id] = []
+        user_history[user_id].append(f"{expression} = {result}")
         await message.reply(f"Результат: <b>{result}</b>", parse_mode=ParseMode.HTML)
     else:
         await message.reply(result)
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
