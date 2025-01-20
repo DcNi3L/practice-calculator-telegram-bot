@@ -1,24 +1,21 @@
 from aiogram import Bot, Dispatcher, types
+from aiogram.types import ParseMode
 from aiogram.utils import executor
 from dotenv import load_dotenv
 import os
 from sympy import sympify, Symbol, pi, E
 
-# Load environment variables
 load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN')
 
 if not API_TOKEN:
     raise ValueError("Токен API не найден! Убедитесь, что он указан в .env файле.")
 
-# Initialize the bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# User history storage
 user_history = {}
 
-# Function to calculate the expression
 def calculate(expression):
     try:
         # sympify converts the string to a mathematical expression
@@ -56,7 +53,7 @@ async def send_help(message: types.Message):
         "`log(100, 10)`\n"
         "`sin(pi / 2)`\n\n"
         "Для просмотра истории используй /history.",
-        parse_mode=types.ParseMode.MARKDOWN,
+        parse_mode=ParseMode.MARKDOWN,
     )
 
 # Command /history
@@ -88,7 +85,7 @@ async def calculate_expression(message: types.Message):
     if isinstance(result, (int, float, Symbol)):
         # Save the result to history
         user_history.setdefault(user_id, []).append(f"{expression} = {result}")
-        await message.reply(f"Результат: <b>{result}</b>", parse_mode=types.ParseMode.HTML)
+        await message.reply(f"Результат: <b>{result}</b>", parse_mode=ParseMode.HTML)
     else:
         await message.reply(result)
 
